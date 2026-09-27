@@ -1,0 +1,196 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoUsuario {
+  CLIENTE
+  PROFISSIONAL
+  AMBOS
+}
+
+enum TipoDocumento {
+  CPF
+  CNPJ
+}
+
+enum PerfilEndereco {
+  CLIENTE
+  PROFISSIONAL
+}
+
+enum StatusSolicitacao {
+  PENDENTE
+  CONFIRMADO
+  RECUSADO
+  CANCELADO
+  CONCLUIDO
+}
+
+// ==============================================================================
+// CADASTRO DE USUÁRIO
+// ==============================================================================
+
+model Usuario {
+  idUsuario     Int           @id @default(autoincrement()) @map("id_usuario")
+  tipoUsuario   TipoUsuario   @map("tipo_usuario")
+  nome          String        @db.VarChar(100)
+  tipoDocumento TipoDocumento @map("tipo_documento")
+  documento     String        @unique @db.VarChar(14)
+  dataNasc      DateTime      @map("data_nasc") @db.Date
+  telefone      String        @db.VarChar(14)
+  email         String        @unique @db.VarChar(255)
+  senha         String        @db.VarChar(255)
+  fotoPerfil    String?       @map("foto_perfil") @db.VarChar(255)
+  dataCriacao   DateTime      @default(now()) @map("data_criacao") @db.Timestamptz(6)
+
+  profissional Profissional?
+  cliente      Cliente?
+  otps         OtpRecuperacaoSenha[]
+  enderecos    Endereco[]
+
+  @@map("usuarios")
+}
+
+model Profissao {
+  idProfissao   Int    @id @default(autoincrement()) @map("id_profissao")
+  nomeProfissao String @unique @map("nome_profissao") @db.VarChar(50)
+
+  profissionais Profissional[]
+
+  @@map("profissoes")
+}
+
+// Tabela Filha: Profissionais (PK compartilhada com usuarios)
+model Profissional {
+  idProfissional     Int       @id @map("id_profissional")
+  idProfissao        Int       @map("id_profissao")
+  especialidades     String?   @db.VarChar(255)
+  anosExperiencia    Int?      @map("anos_experiencia")
+  valorHora          Decimal   @map("valor_hora") @db.Decimal(12, 2)
+  areaAtendimento    Int       @map("area_atendimento")
+  perfilAtivo        Boolean   @default(true) @map("perfil_ativo")
+  dataAtivacaoPerfil DateTime  @default(now()) @map("data_ativacao_perfil") @db.Timestamptz(6)
+  dataDesativacao    DateTime? @map("data_desativacao") @db.Timestamptz(6)
+
+  usuario      Usuario       @relation(fields: [idProfissional], references: [idUsuario], onDelete: Restrict)
+  profissao    Profissao     @relation(fields: [idProfissao], references: [idProfissao], onDelete: Restrict)
+  solicitacoes Solicitacao[]
+
+  @@map("profissionais")
+}
+
+// Tabela Filha: Clientes (PK compartilhada com usuarios)
+model Cliente {
+  idCliente          Int       @id @map("id_cliente")
+  perfilAtivo        Boolean   @default(true) @map("perfil_ativo")
+  dataAtivacaoPerfil DateTime  @default(now()) @map("data_ativacao_perfil") @db.Timestamptz(6)
+  dataDesativacao    DateTime? @map("data_desativacao") @db.Timestamptz(6)
+
+  usuario      Usuario       @relation(fields: [idCliente], references: [idUsuario], onDelete: Restrict)
+  solicitacoes Solicitacao[]
+
+  @@map("clientes")
+}
+
+// ==============================================================================
+// RECUPERAÇÃO DE SENHA (OTP)
+// ==============================================================================
+
+model OtpRecuperacaoSenha {
+  idOtp       Int      @id @default(autoincrement()) @map("id_otp")
+  idUsuario   Int      @map("id_usuario")
+  codigo      String   @db.VarChar(6)
+  expiraEm    DateTime @map("expira_em") @db.Timestamptz(6)
+  tentativas  Int      @default(0) @db.SmallInt
+  usado       Boolean  @default(false)
+  dataCriacao DateTime @default(now()) @map("data_criacao") @db.Timestamptz(6)
+
+  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario], onDelete: Restrict)
+
+  @@map("otp_recuperacao_senha")
+}
+
+// ==============================================================================
+// ENDEREÇOS
+// ==============================================================================
+
+model Endereco {
+  idEndereco     Int            @id @default(autoincrement()) @map("id_endereco")
+  idUsuario      Int            @map("id_usuario")
+  perfilEndereco PerfilEndereco @map("perfil_endereco")
+  cep            String         @db.VarChar(9)
+  estado         String         @db.VarChar(2)
+  cidade         String         @db.VarChar(50)
+  bairro         String         @db.VarChar(50)
+  rua            String         @db.VarChar(100)
+  numero         String         @db.VarChar(10)
+  complemento    String?        @db.VarChar(50)
+  latitude       Decimal        @db.Decimal(9, 6)
+  longitude      Decimal        @db.Decimal(9, 6)
+  enderecoPadrao Boolean        @default(false) @map("endereco_padrao")
+
+  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario], onDelete: Restrict)
+
+  @@map("enderecos")
+}
+
+// ==============================================================================
+// OPERAÇÕES, AGENDA E HISTÓRICO
+// ==============================================================================
+
+model Servico {
+  idServico Int      @id @default(autoincrement()) @map("id_servico")
+  problema  String   @db.VarChar(50)
+  descricao String   @db.VarChar(250)
+  fotos     String[] @db.VarChar(255)
+
+  solicitacoes Solicitacao[]
+
+  @@map("servicos")
+}
+
+model Solicitacao {
+  idSolicitacao  Int               @id @default(autoincrement()) @map("id_solicitacao")
+  idCliente      Int               @map("id_cliente")
+  idProfissional Int               @map("id_profissional")
+  idServico      Int               @map("id_servico")
+  dataServico    DateTime          @map("data_servico") @db.Date
+  horaServico    DateTime          @map("hora_servico") @db.Time
+  orcamento      Decimal?          @db.Decimal(12, 2)
+  formaPagamento String?           @map("forma_pagamento") @db.VarChar(20)
+  status         StatusSolicitacao @default(PENDENTE)
+
+  cliente      Cliente      @relation(fields: [idCliente], references: [idCliente], onDelete: Restrict)
+  profissional Profissional @relation(fields: [idProfissional], references: [idProfissional], onDelete: Restrict)
+  servico      Servico      @relation(fields: [idServico], references: [idServico], onDelete: Restrict)
+  pagamento    Pagamento?
+
+  @@map("solicitacoes")
+}
+
+// ==============================================================================
+// FINANCEIRO
+// ==============================================================================
+
+model Pagamento {
+  idPagamento    Int      @id @default(autoincrement()) @map("id_pagamento")
+  idSolicitacao  Int      @unique @map("id_solicitacao")
+  valor          Decimal  @db.Decimal(12, 2)
+  formaPagamento String   @map("forma_pagamento") @db.VarChar(20)
+  dataPagamento  DateTime @default(now()) @map("data_pagamento") @db.Timestamptz(6)
+
+  solicitacao Solicitacao @relation(fields: [idSolicitacao], references: [idSolicitacao], onDelete: Restrict)
+
+  @@map("pagamentos")
+}
