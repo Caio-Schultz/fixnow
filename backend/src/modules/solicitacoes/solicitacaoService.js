@@ -7,7 +7,6 @@ async function criarSolicitacao(idCliente, solicitacaoBody) {
             horaServico,
             problema,
             descricao,
-            orcamento,
             tipoSolicitacao
              } = solicitacaoBody;
 
@@ -27,7 +26,6 @@ async function criarSolicitacao(idCliente, solicitacaoBody) {
                 idEndereco: idEndereco,
                 dataServico: new Date(`${dataServico}T00:00:00Z`),
                 horaServico: new Date(`1970-01-01T${horaServico}:00Z`),
-                orcamento: orcamento,
                 tipoSolicitacao: tipoSolicitacao,
                 formaPagamento: "DINHEIRO",
                 // status sobe Pendente como padrão do banco
@@ -40,6 +38,36 @@ async function criarSolicitacao(idCliente, solicitacaoBody) {
     return resultado;
 }
 
+async function enviarOrcamentoSolicitacao(idSolicitacao, body) {
+    const { orcamento } = body;
+
+    await prisma.solicitacao.update({
+        where: { idSolicitacao: idSolicitacao },
+        data: {
+            orcamento: orcamento
+        }
+    });
+}
+
+async function cancelarSolicitacao(idUsuario, idSolicitacao) {
+    
+
+    const solicitacao = await prisma.solicitacao.update({
+        where: {
+            idSolicitacao: idSolicitacao
+        },
+        data: {
+            status: "CANCELADO",
+            canceladoPor: idUsuario,
+            dataCancelamento: new Date()
+        }
+    });
+
+    return solicitacao;
+}
+
 export default {
-    criarSolicitacao
+    criarSolicitacao,
+    enviarOrcamentoSolicitacao,
+    cancelarSolicitacao
 };
