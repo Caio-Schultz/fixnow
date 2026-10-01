@@ -38,23 +38,79 @@ async function criarSolicitacao(idCliente, solicitacaoBody) {
     return resultado;
 }
 
-async function enviarOrcamentoSolicitacao(idSolicitacao, body) {
+// Prestador envia orçamento depois do cliente criar solicitação/serviço
+async function enviarOrcamentoSolicitacao(idSolicitacao, idProfissional, body) {
     const { orcamento } = body;
 
-    await prisma.solicitacao.update({
-        where: { idSolicitacao: idSolicitacao },
+    const { count } = await prisma.solicitacao.updateMany({
+        where: { 
+            idSolicitacao: idSolicitacao,
+            idProfissional: idProfissional,
+            status: "PENDENTE" 
+        },
         data: {
+            status: "ORCAMENTO_ENVIADO",
             orcamento: orcamento
         }
     });
+
+    if (count === 0) throw new Error("Solicitação indisponível");
 }
 
+// Prestador recusa solicitação sem enviar orçamento
+async function recusarSolicitacaoPrestador(idSolicitacao, idProfissional) {
+    const { count } = await prisma.solicitacao.updateMany({
+        where: {
+            idSolicitacao: idSolicitacao,
+            idProfissional: idProfissional,
+            status: "PENDENTE"
+        },
+        data: {
+            status: "RECUSADO"
+        }
+    });
+
+    if(count === 0) throw new Error("Solicitação indisponível");
+}
+
+// Cliente aceita ou recusa orçamento enviado ("ACEITAR" ou "RECUSAR")
+async function responderOrcamento(idSolicitacao, idCliente, body) {
+    const { decisao } = body;
+
+    let resposta; 
+
+    if(decisao === "ACEITAR") {
+        resposta = { status: "CONFIRMADO" }
+    } 
+    else if(decisao === "RECUSAR") {
+        resposta = { status: "CANCELADO" , canceladoPor: idCliente, dataCancelamento: new Date() }
+    } else {
+        throw new Error("Decisão inválida!");
+    }
+
+    const { count } = await prisma.solicitacao.updateMany({
+        where: {
+            idSolicitacao: idSolicitacao,
+            idCliente: idCliente,
+            status: "ORCAMENTO_ENVIADO"
+        },
+        data: resposta
+    });
+
+    if(count === 0) throw new Error("Solicitação indisponível");
+}
+
+// Cliente ou prestador cancela
 async function cancelarSolicitacao(idUsuario, idSolicitacao) {
     
 
-    const solicitacao = await prisma.solicitacao.update({
+    const { count } = await prisma.solicitacao.updateMany({
         where: {
-            idSolicitacao: idSolicitacao
+            idSolicitacao: idSolicitacao,
+            OR: [
+                { idCliente: idUsuario, status: { in: ["PENDENTE", "CONFIRMADO"] }},
+                { idProfissional: idUsuario, status: "CONFIRMADO" }
+            ]
         },
         data: {
             status: "CANCELADO",
@@ -63,11 +119,52 @@ async function cancelarSolicitacao(idUsuario, idSolicitacao) {
         }
     });
 
-    return solicitacao;
+    if(count === 0) throw new Error("Solicitação indisponível");
+}
+
+// Prestador conclui o serviço
+async function concluirSolicitacao(idProfissional, idSolicitacao) {
+    
+    const solicitacaoConcluida = await prisma.$transaction(async (tx) => {
+        
+        const { count } = await tx.solicitacao.updateMany({
+            where: {
+                idSolicitacao: idSolicitacao,
+                idProfissional: idProfissional, 
+                status: "CONFIRMADO"
+            },
+            data: {
+                status: "CONCLUIDO"
+            }
+        });
+
+        if(count === 0) throw new Error("Solicitação indisponível");
+
+        const solicitacao = await tx.solicitacao.findUnique({
+            where: {
+                idSolicitacao: idSolicitacao
+            }
+        });
+
+        const pagamento = await tx.pagamento.create({
+            data: {
+                idSolicitacao: idSolicitacao,
+                valor: solicitacao.orcamento,
+                formaPagamento: solicitacao.formaPagamento
+            }
+        });
+
+        return pagamento;
+    });
+
+    return solicitacaoConcluida;
 }
 
 export default {
     criarSolicitacao,
     enviarOrcamentoSolicitacao,
-    cancelarSolicitacao
+    recusarSolicitacaoPrestador,
+    responderOrcamento,
+    cancelarSolicitacao,
+    concluirSolicitacao
 };
