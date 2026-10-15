@@ -49,7 +49,7 @@ async function enviarOrcamentoSolicitacao(idSolicitacao, idProfissional, body) {
             status: "PENDENTE" 
         },
         data: {
-            status: "ORCAMENTO_ENVIADO",
+            status: "ORCAMENTO",
             orcamento: orcamento
         }
     });
@@ -92,7 +92,7 @@ async function responderOrcamento(idSolicitacao, idCliente, body) {
         where: {
             idSolicitacao: idSolicitacao,
             idCliente: idCliente,
-            status: "ORCAMENTO_ENVIADO"
+            status: "ORCAMENTO"
         },
         data: resposta
     });
@@ -150,7 +150,7 @@ async function concluirSolicitacao(idProfissional, idSolicitacao) {
             data: {
                 idSolicitacao: idSolicitacao,
                 valor: solicitacao.orcamento,
-                formaPagamento: solicitacao.formaPagamento
+                formaPagamento: solicitacao.formaPagamento ?? "DINHEIRO"
             }
         });
 
