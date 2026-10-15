@@ -1,0 +1,2 @@
+ALTER TYPE "status_solicitacao_enum"
+RENAME VALUE 'ORCAMENTO_ENVIADO' TO 'ORÇAMENTO';

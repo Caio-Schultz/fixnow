@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==============================================================================
+// ENUMS
+// ==============================================================================
+
 enum TipoUsuario {
   CLIENTE
   PROFISSIONAL
@@ -22,6 +26,13 @@ enum TipoDocumento {
   @@map("tipo_documento_enum")
 }
 
+enum TipoSolicitacao {
+  NORMAL
+  URGENCIA
+
+  @@map("tipo_solicitacao_enum")
+}
+
 enum PerfilEndereco {
   CLIENTE
   PROFISSIONAL
@@ -31,7 +42,7 @@ enum PerfilEndereco {
 
 enum StatusSolicitacao {
   PENDENTE
-  CONTRAPROPOSTA
+  ORCAMENTO  @map("ORÇAMENTO") // Prisma não aceita "Ç" no identificador; o valor no banco continua "ORÇAMENTO"
   CONFIRMADO
   RECUSADO
   CANCELADO
@@ -40,11 +51,11 @@ enum StatusSolicitacao {
   @@map("status_solicitacao_enum")
 }
 
-enum TipoSolicitacao {
-  NORMAL
-  URGENCIA
+enum StatusPagamento {
+  PENDENTE
+  CONFIRMADO
 
-  @@map("tipo_solicitacao_enum")
+  @@map("status_pagamento_enum")
 }
 
 // ==============================================================================
@@ -52,63 +63,67 @@ enum TipoSolicitacao {
 // ==============================================================================
 
 model Usuario {
-  idUsuario     Int           @id @default(autoincrement()) @map("id_usuario")
-  tipoUsuario   TipoUsuario   @map("tipo_usuario")
-  nome          String        @db.VarChar(100)
-  tipoDocumento TipoDocumento @map("tipo_documento")
-  documento     String        @unique @db.VarChar(14)
-  dataNasc      DateTime      @map("data_nasc") @db.Date
-  telefone      String        @db.VarChar(14)
-  email         String        @unique @db.VarChar(255)
-  senha         String        @db.VarChar(255)
-  fotoPerfil    String?       @map("foto_perfil") @db.VarChar(255)
-  dataCriacao   DateTime      @default(now()) @map("data_criacao") @db.Timestamptz(6)
+  id_usuario     Int           @id @default(autoincrement())
+  tipo_usuario   TipoUsuario
+  nome           String        @db.VarChar(100)
+  tipo_documento TipoDocumento
+  documento      String        @unique @db.VarChar(14)
+  data_nasc      DateTime      @db.Date
+  data_criacao   DateTime      @default(now()) @db.Timestamptz(6)
 
-  profissional         Profissional?
-  cliente              Cliente?
-  otps                 OtpRecuperacaoSenha[]
-  enderecos            Endereco[]
-  solicitacoesCanceladas Solicitacao[] @relation("CanceladoPor")
+  profissional            Profissional?
+  cliente                 Cliente?
+  otps                    OtpRecuperacaoSenha[]
+  enderecos               Endereco[]
+  solicitacoes_canceladas Solicitacao[]         @relation("SolicitacaoCanceladoPor")
 
   @@map("usuarios")
 }
 
 model Profissao {
-  idProfissao   Int    @id @default(autoincrement()) @map("id_profissao")
-  nomeProfissao String @unique @map("nome_profissao") @db.VarChar(50)
+  id_profissao   Int    @id @default(autoincrement())
+  nome_profissao String @unique @db.VarChar(50)
 
   profissionais Profissional[]
 
   @@map("profissoes")
 }
 
-// Tabela Filha: Profissionais (PK compartilhada com usuarios)
+// Tabela filha: profissionais (PK compartilhada com usuarios)
 model Profissional {
-  idProfissional     Int       @id @map("id_profissional")
-  idProfissao        Int       @map("id_profissao")
-  especialidades     String?   @db.VarChar(255)
-  anosExperiencia    Int?      @map("anos_experiencia")
-  valorHora          Decimal   @map("valor_hora") @db.Decimal(12, 2)
-  areaAtendimento    Int       @map("area_atendimento")
-  perfilAtivo        Boolean   @default(true) @map("perfil_ativo")
-  dataAtivacaoPerfil DateTime  @default(now()) @map("data_ativacao_perfil") @db.Timestamptz(6)
-  dataDesativacao    DateTime? @map("data_desativacao") @db.Timestamptz(6)
+  id_profissional      Int       @id
+  id_profissao         Int
+  especialidades       String?   @db.VarChar(255)
+  anos_experiencia     Int?
+  valor_hora           Decimal   @db.Decimal(12, 2)
+  area_atendimento     Int
+  telefone             String    @db.VarChar(14)
+  email                String    @unique @db.VarChar(255)
+  senha                String    @db.VarChar(255)
+  foto_perfil          String?   @db.VarChar(255)
+  perfil_ativo         Boolean   @default(true)
+  data_ativacao_perfil DateTime  @default(now()) @db.Timestamptz(6)
+  data_desativacao     DateTime? @db.Timestamptz(6)
 
-  usuario      Usuario       @relation(fields: [idProfissional], references: [idUsuario], onDelete: Restrict)
-  profissao    Profissao     @relation(fields: [idProfissao], references: [idProfissao], onDelete: Restrict)
+  usuario      Usuario       @relation(fields: [id_profissional], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "profissionais_id_profissional_fkey")
+  profissao    Profissao     @relation(fields: [id_profissao], references: [id_profissao], onDelete: Restrict, onUpdate: Cascade, map: "profissionais_id_profissao_fkey")
   solicitacoes Solicitacao[]
 
   @@map("profissionais")
 }
 
-// Tabela Filha: Clientes (PK compartilhada com usuarios)
+// Tabela filha: clientes (PK compartilhada com usuarios)
 model Cliente {
-  idCliente          Int       @id @map("id_cliente")
-  perfilAtivo        Boolean   @default(true) @map("perfil_ativo")
-  dataAtivacaoPerfil DateTime  @default(now()) @map("data_ativacao_perfil") @db.Timestamptz(6)
-  dataDesativacao    DateTime? @map("data_desativacao") @db.Timestamptz(6)
+  id_cliente           Int       @id
+  telefone             String    @db.VarChar(14)
+  email                String    @unique @db.VarChar(255)
+  senha                String    @db.VarChar(255)
+  foto_perfil          String?   @db.VarChar(255)
+  perfil_ativo         Boolean   @default(true)
+  data_ativacao_perfil DateTime  @default(now()) @db.Timestamptz(6)
+  data_desativacao     DateTime? @db.Timestamptz(6)
 
-  usuario      Usuario       @relation(fields: [idCliente], references: [idUsuario], onDelete: Restrict)
+  usuario      Usuario       @relation(fields: [id_cliente], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "clientes_id_cliente_fkey")
   solicitacoes Solicitacao[]
 
   @@map("clientes")
@@ -119,15 +134,15 @@ model Cliente {
 // ==============================================================================
 
 model OtpRecuperacaoSenha {
-  idOtp       Int      @id @default(autoincrement()) @map("id_otp")
-  idUsuario   Int      @map("id_usuario")
-  codigo      String   @db.VarChar(6)
-  expiraEm    DateTime @map("expira_em") @db.Timestamptz(6)
-  tentativas  Int      @default(0) @db.SmallInt
-  usado       Boolean  @default(false)
-  dataCriacao DateTime @default(now()) @map("data_criacao") @db.Timestamptz(6)
+  id_otp       Int      @id @default(autoincrement())
+  id_usuario   Int
+  codigo       String   @db.VarChar(6)
+  expira_em    DateTime @db.Timestamptz(6)
+  tentativas   Int      @default(0) @db.SmallInt
+  usado        Boolean  @default(false)
+  data_criacao DateTime @default(now()) @db.Timestamptz(6)
 
-  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario], onDelete: Restrict)
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "otp_recuperacao_senha_id_usuario_fkey")
 
   @@map("otp_recuperacao_senha")
 }
@@ -137,21 +152,21 @@ model OtpRecuperacaoSenha {
 // ==============================================================================
 
 model Endereco {
-  idEndereco     Int            @id @default(autoincrement()) @map("id_endereco")
-  idUsuario      Int            @map("id_usuario")
-  perfilEndereco PerfilEndereco @map("perfil_endereco")
-  cep            String         @db.VarChar(9)
-  estado         String         @db.VarChar(2)
-  cidade         String         @db.VarChar(50)
-  bairro         String         @db.VarChar(50)
-  rua            String         @db.VarChar(100)
-  numero         String         @db.VarChar(10)
-  complemento    String?        @db.VarChar(50)
-  latitude       Decimal        @db.Decimal(9, 6)
-  longitude      Decimal        @db.Decimal(9, 6)
-  enderecoPadrao Boolean        @default(false) @map("endereco_padrao")
+  id_endereco     Int            @id @default(autoincrement())
+  id_usuario      Int
+  perfil_endereco PerfilEndereco
+  cep             String         @db.VarChar(9)
+  estado          String         @db.VarChar(2)
+  cidade          String         @db.VarChar(50)
+  bairro          String         @db.VarChar(50)
+  rua             String         @db.VarChar(100)
+  numero          String         @db.VarChar(10)
+  complemento     String?        @db.VarChar(50)
+  latitude        Decimal        @db.Decimal(9, 6)
+  longitude       Decimal        @db.Decimal(9, 6)
+  endereco_padrao Boolean        @default(false)
 
-  usuario      Usuario       @relation(fields: [idUsuario], references: [idUsuario], onDelete: Restrict)
+  usuario      Usuario       @relation(fields: [id_usuario], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "enderecos_id_usuario_fkey")
   solicitacoes Solicitacao[]
 
   @@map("enderecos")
@@ -165,7 +180,7 @@ model Servico {
   idServico Int      @id @default(autoincrement()) @map("id_servico")
   problema  String   @db.VarChar(50)
   descricao String   @db.VarChar(250)
-  fotos     String[] @db.VarChar(255)
+  fotos     String[] @default([]) @db.VarChar(255)
 
   solicitacoes Solicitacao[]
 
@@ -179,7 +194,7 @@ model Solicitacao {
   idServico        Int               @map("id_servico")
   idEndereco       Int?              @map("id_endereco")
   dataServico      DateTime          @map("data_servico") @db.Date
-  horaServico      DateTime          @map("hora_servico") @db.Time
+  horaServico      DateTime          @map("hora_servico") @db.Time(3)
   tipoSolicitacao  TipoSolicitacao   @default(NORMAL) @map("tipo_solicitacao")
   orcamento        Decimal?          @db.Decimal(12, 2)
   formaPagamento   String?           @map("forma_pagamento") @db.VarChar(20)
@@ -189,15 +204,15 @@ model Solicitacao {
   dataCriacao      DateTime          @default(now()) @map("data_criacao") @db.Timestamptz(6)
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  cliente         Cliente      @relation(fields: [idCliente], references: [idCliente], onDelete: Restrict)
-  profissional    Profissional @relation(fields: [idProfissional], references: [idProfissional], onDelete: Restrict)
-  servico         Servico      @relation(fields: [idServico], references: [idServico], onDelete: Restrict)
-  endereco        Endereco?    @relation(fields: [idEndereco], references: [idEndereco], onDelete: Restrict)
-  usuarioCancelou Usuario?     @relation("CanceladoPor", fields: [canceladoPor], references: [idUsuario], onDelete: Restrict)
-  pagamento       Pagamento?
+  cliente      Cliente      @relation(fields: [idCliente], references: [id_cliente], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_cliente_fkey")
+  profissional Profissional @relation(fields: [idProfissional], references: [id_profissional], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_profissional_fkey")
+  servico      Servico      @relation(fields: [idServico], references: [idServico], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_servico_fkey")
+  endereco     Endereco?    @relation(fields: [idEndereco], references: [id_endereco], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_endereco_fkey")
+  cancelador   Usuario?     @relation("SolicitacaoCanceladoPor", fields: [canceladoPor], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_cancelado_por_fkey")
+  pagamento    Pagamento?
 
-  @@index([idCliente, status])
-  @@index([idProfissional, status])
+  @@index([idCliente, status], map: "solicitacoes_id_cliente_status_idx")
+  @@index([idProfissional, status], map: "solicitacoes_id_profissional_status_idx")
   @@map("solicitacoes")
 }
 
@@ -206,13 +221,14 @@ model Solicitacao {
 // ==============================================================================
 
 model Pagamento {
-  idPagamento    Int      @id @default(autoincrement()) @map("id_pagamento")
-  idSolicitacao  Int      @unique @map("id_solicitacao")
-  valor          Decimal  @db.Decimal(12, 2)
-  formaPagamento String   @map("forma_pagamento") @db.VarChar(20)
-  dataPagamento  DateTime @default(now()) @map("data_pagamento") @db.Timestamptz(6)
+  idPagamento    Int             @id @default(autoincrement()) @map("id_pagamento")
+  idSolicitacao  Int             @unique @map("id_solicitacao")
+  valor          Decimal         @db.Decimal(12, 2)
+  formaPagamento String          @map("forma_pagamento") @db.VarChar(20)
+  status         StatusPagamento @default(PENDENTE)
+  dataPagamento  DateTime        @default(now()) @map("data_pagamento") @db.Timestamptz(6)
 
-  solicitacao Solicitacao @relation(fields: [idSolicitacao], references: [idSolicitacao], onDelete: Restrict)
+  solicitacao Solicitacao @relation(fields: [idSolicitacao], references: [idSolicitacao], onDelete: Restrict, onUpdate: Cascade, map: "pagamentos_id_solicitacao_fkey")
 
   @@map("pagamentos")
 }
