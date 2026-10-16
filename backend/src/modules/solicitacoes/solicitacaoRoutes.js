@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import solicitacaoController from './solicitacaoController.js';
-import autenticarFake from '../../middlewares/autenticarFake.js';
+import authMiddleware from '../../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.use(autenticarFake);
+router.use(authMiddleware.authenticate);
 
 router.post("/", solicitacaoController.criarSolicitacao);
 router.put("/:id/orcamento", solicitacaoController.enviarOrcamentoSolicitacao);
