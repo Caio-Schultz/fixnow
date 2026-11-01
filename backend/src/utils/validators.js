@@ -31,7 +31,7 @@ function validarDocumento(documento) {
         throw httpError.httpError(400, 'Documento inválido.');
     }
 
-    const tipoDocumento = documentoLimpo.length === 11 ? 'CPF' : 'CPNJ';
+    const tipoDocumento = documentoLimpo.length === 11 ? 'CPF' : 'CNPJ';
 
     return { documento: documentoLimpo, tipoDocumento };
 }

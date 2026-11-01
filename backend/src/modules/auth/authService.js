@@ -39,7 +39,7 @@ async function login(email, senha, perfil) {
 
     // Caso a conta tenha sido desativada há mais de 30 dias o usuário precisa solicitar reativação.
     if (!conta.perfilAtivo && tempoContaDesativada(conta.dataDesativacao)) {
-        throw httpError.httpError(403, 'Perfil desativado há mais de 30 dias. Solicite reativaçao.');
+        throw httpError.httpError(403, 'Perfil desativado há mais de 30 dias. Solicite reativação.');
     }
 
     // Caso a conta esteja inativa há menos de 30 dias o usuário consegue logar e o perfil é reativado.

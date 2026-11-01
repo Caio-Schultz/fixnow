@@ -6,7 +6,7 @@ async function buscarPorId(req, res) {
         const dados = await usuarioService.buscarPorId(req.user.idUsuario);
         res.json(dados);
     } catch (error) {
-        httpError.httpError(res, error);
+        httpError.responderErro(res, error);
     }
 }
 
@@ -20,7 +20,7 @@ async function atualizarUsuario(req, res) {
     }
 
     try {
-        const resultado = await usuarioService.atualizarNome(req.user.idUsuario, nome);
+        const resultado = await usuarioService.atualizarUsuario(req.user.idUsuario, nome);
         res.json(resultado);
     } catch (error) {
         httpError.responderErro(res, error);
