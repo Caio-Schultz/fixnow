@@ -47,7 +47,7 @@ async function criarUsuario(dados, db = prisma) {
 /* Quando um usuário que já tem conta cliente (ou profissional), cria uma nova conta 
 como profissional (ou cliente) setamos o tipoUsuário dele para AMBOS */
 
-// Na próxima versão também atualizará para CLIENTE ou PROFISSIONAL em caso de exclusão de um dos peris
+// Na próxima versão também atualizará para CLIENTE ou PROFISSIONAL em caso de exclusão de um dos perfis
 async function atualizarTipoUsuario(idUsuario, db = prisma) {
     const usuario = await db.usuario.update({
         where: { idUsuario: idUsuario },
