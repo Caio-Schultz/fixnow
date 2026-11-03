@@ -42,7 +42,7 @@ function isAnoBissexto(ano) {
     if (ano % 400 === 0) return true;
     if (ano % 100 === 0) return false;
     if (ano % 4 === 0) return true;
-    
+
     return false;
 }
 
@@ -111,4 +111,44 @@ function validarDataNasc(dataNasc) {
     return new Date(dataNasc);
 }
 
-export default { validarNome, validarDocumento, validarDataNasc };
+function validarEmail(email) {
+    if (!email) return false;
+
+    // Valida se o e-mail contém '@' e texto antes e depois dele, assim como um '.' e algo depois dele.
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    return regexEmail.test(email); // .test() retorna True ou False.
+}
+
+function validarTelefone(telefone) {
+    if (!telefone || typeof telefone !== 'string') return false;
+    const numeros = telefone.replace(/\D/g, '');
+    
+    // Brasil: DDD + 8 dígitos (10) ou DDD + 9 dígitos (11)
+    return numeros.length >= 10 && numeros.length <= 11;
+}
+
+function validarSenha(senha) {
+    if (!senha) return false;
+    if (senha.length < 8) return false;
+    if (senha. length > 64) return false;
+
+    const temMaiuscula = /[A-Z]/.test(senha);
+    const temMinuscula = /[a-z]/.test(senha);
+    const temNumero = /[0-9]/.test(senha);
+
+    if (!temMaiuscula || !temMinuscula || !temNumero) {
+        return false
+    }
+
+    return true;
+}
+
+export default {
+    validarNome,
+    validarDocumento,
+    validarDataNasc,
+    validarEmail,
+    validarTelefone,
+    validarSenha
+};

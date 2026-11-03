@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import solicitacaoRoutes from './modules/solicitacoes/solicitacaoRoutes.js';
 import authRoutes from './modules/auth/authRoutes.js';
 import usuarioRoutes from './modules/usuarios/usuarioRoutes.js';
-//import clienteRoutes from './modules/clientes/clienteRoutes.js';
+import clienteRoutes from './modules/clientes/clienteRoutes.js';
 //import profissionalRoutes from './modules/profissionais/profissionalRoutes.js';
 
 const app = express();
@@ -19,7 +19,7 @@ app.use(express.json());
 api.use("/solicitacoes", solicitacaoRoutes);
 api.use("/auth", authRoutes);
 api.use("/usuarios", usuarioRoutes);
-//api.use("/clientes", clienteRoutes);
+api.use("/clientes", clienteRoutes);
 //api.use("/profissionais", profissionalRoutes);
 //api.use("/enderecos", enderecoRoutes);
 // ...
