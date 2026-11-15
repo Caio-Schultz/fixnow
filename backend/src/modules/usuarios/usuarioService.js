@@ -1,6 +1,6 @@
 import prisma from '../../db/prisma.js';
 import httpError from '../../utils/httpError.js';
-import validators from '../../utils/validators.js';
+import formatValidators from '../../utils/formatValidators.js';
 
 // Funções Internas, para uso dos módulos Clientes e Profissionais
 
@@ -15,9 +15,9 @@ async function buscarPorDocumento(documento, db = prisma) {
 }
 
 async function criarUsuario(dados, db = prisma) {
-    const nome = validators.validarNome(dados.nome);
-    const infoDocumento = validators.validarDocumento(dados.documento);
-    const dataNasc = validators.validarDataNasc(dados.dataNasc);
+    const nome = formatValidators.validarNome(dados.nome);
+    const infoDocumento = formatValidators.validarDocumento(dados.documento);
+    const dataNasc = formatValidators.validarDataNasc(dados.dataNasc);
 
     if (dados.tipoUsuario !== 'CLIENTE' && dados.tipoUsuario !== 'PROFISSIONAL') {
         throw httpError.httpError(400, 'Tipo de usuário inválido. Use CLIENTE ou PROFISSIONAL.');
@@ -80,17 +80,24 @@ async function buscarPorId(idUsuario) {
 
 // Inicialmente, será possível alterar apenas o nome
 async function atualizarUsuario(idUsuario, nome) {
-    const nomeLimpo = validators.validarNome(nome);
+    const nomeLimpo = formatValidators.validarNome(nome);
 
-    const usuario = await prisma.usuario.update({
-        where: { idUsuario: idUsuario },
-        data: { nome: nomeLimpo },
-    });
+    try {
+        const usuario = await prisma.usuario.update({
+            where: { idUsuario: idUsuario },
+            data: { nome: nomeLimpo },
+        });
 
-    return { 
-        idUsuario: usuario.idUsuario,
-        nome: usuario.nome
-    };
+        return { 
+            idUsuario: usuario.idUsuario,
+            nome: usuario.nome
+        };
+    } catch (error) {
+        if (error.code === 'P2025') {
+            throw httpError.httpError(404, 'Usuário não encontrado.');
+        }
+        throw error;
+    }
 }
 
 export default {

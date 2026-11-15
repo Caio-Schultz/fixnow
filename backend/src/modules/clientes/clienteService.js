@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../../db/prisma.js';
 import httpError from '../../utils/httpError.js';
-import formatValidators from '../../utils/validators.js';
+import formatValidators from '../../utils/formatValidators.js';
 import dbValidators from '../../utils/dbValidators.js';
 import usuarioService from '../usuarios/usuarioService.js';
 
