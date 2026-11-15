@@ -23,4 +23,15 @@ async function verificarTelefoneExistente(perfil, telefone, idIgnorado = null) {
     return false;
 }
 
-export default { verificarEmailExistente, verificarTelefoneExistente };
+async function verificarProfissaoExistente(idProfissao) {
+    const profissao = await prisma.profissao.findUnique({ 
+        where: { idProfissao: idProfissao } 
+    });
+    return !!profissao; // Retorna true se encontrou, false se for nulo
+}
+
+export default { 
+    verificarEmailExistente, 
+    verificarTelefoneExistente,
+    verificarProfissaoExistente
+};
