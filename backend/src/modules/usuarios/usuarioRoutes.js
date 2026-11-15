@@ -4,7 +4,9 @@ import authMiddleware from '../../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.get('/me', authMiddleware.authenticate, usuarioController.buscarPorId);
-router.patch('/me', authMiddleware.authenticate, usuarioController.atualizarUsuario);
+router.use(authMiddleware.authenticate);
+
+router.get('/me', usuarioController.buscarPorId);
+router.patch('/me', usuarioController.atualizarUsuario);
 
 export default router;
