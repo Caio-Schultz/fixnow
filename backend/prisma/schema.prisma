@@ -63,26 +63,26 @@ enum StatusPagamento {
 // ==============================================================================
 
 model Usuario {
-  id_usuario     Int           @id @default(autoincrement())
-  tipo_usuario   TipoUsuario
-  nome           String        @db.VarChar(100)
-  tipo_documento TipoDocumento
-  documento      String        @unique @db.VarChar(14)
-  data_nasc      DateTime      @db.Date
-  data_criacao   DateTime      @default(now()) @db.Timestamptz(6)
+  idUsuario     Int           @id @default(autoincrement()) @map("id_usuario")
+  tipoUsuario   TipoUsuario   @map("tipo_usuario")
+  nome          String        @db.VarChar(100)
+  tipoDocumento TipoDocumento @map("tipo_documento")
+  documento     String        @unique @db.VarChar(14)
+  dataNasc      DateTime      @map("data_nasc") @db.Date
+  dataCriacao   DateTime      @default(now()) @map("data_criacao") @db.Timestamptz(6)
 
-  profissional            Profissional?
-  cliente                 Cliente?
-  otps                    OtpRecuperacaoSenha[]
-  enderecos               Endereco[]
-  solicitacoes_canceladas Solicitacao[]         @relation("SolicitacaoCanceladoPor")
+  profissional           Profissional?
+  cliente                Cliente?
+  otps                   OtpRecuperacaoSenha[]
+  enderecos              Endereco[]
+  solicitacoesCanceladas Solicitacao[]         @relation("SolicitacaoCanceladoPor")
 
   @@map("usuarios")
 }
 
 model Profissao {
-  id_profissao   Int    @id @default(autoincrement())
-  nome_profissao String @unique @db.VarChar(50)
+  idProfissao   Int    @id @default(autoincrement()) @map("id_profissao")
+  nomeProfissao String @unique @map("nome_profissao") @db.VarChar(50)
 
   profissionais Profissional[]
 
@@ -91,22 +91,22 @@ model Profissao {
 
 // Tabela filha: profissionais (PK compartilhada com usuarios)
 model Profissional {
-  id_profissional      Int       @id
-  id_profissao         Int
-  especialidades       String?   @db.VarChar(255)
-  anos_experiencia     Int?
-  valor_hora           Decimal   @db.Decimal(12, 2)
-  area_atendimento     Int
-  telefone             String    @db.VarChar(14)
-  email                String    @unique @db.VarChar(255)
-  senha                String    @db.VarChar(255)
-  foto_perfil          String?   @db.VarChar(255)
-  perfil_ativo         Boolean   @default(true)
-  data_ativacao_perfil DateTime  @default(now()) @db.Timestamptz(6)
-  data_desativacao     DateTime? @db.Timestamptz(6)
+  idProfissional     Int       @id @map("id_profissional")
+  idProfissao        Int       @map("id_profissao")
+  especialidades     String?   @db.VarChar(255)
+  anosExperiencia    Int?      @map("anos_experiencia")
+  valorHora          Decimal   @map("valor_hora") @db.Decimal(12, 2)
+  areaAtendimento    Int       @map("area_atendimento")
+  telefone           String    @db.VarChar(14)
+  email              String    @unique @db.VarChar(255)
+  senha              String    @db.VarChar(255)
+  fotoPerfil         String?   @map("foto_perfil") @db.VarChar(255)
+  perfilAtivo        Boolean   @default(true) @map("perfil_ativo")
+  dataAtivacaoPerfil DateTime  @default(now()) @map("data_ativacao_perfil") @db.Timestamptz(6)
+  dataDesativacao    DateTime? @map("data_desativacao") @db.Timestamptz(6)
 
-  usuario      Usuario       @relation(fields: [id_profissional], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "profissionais_id_profissional_fkey")
-  profissao    Profissao     @relation(fields: [id_profissao], references: [id_profissao], onDelete: Restrict, onUpdate: Cascade, map: "profissionais_id_profissao_fkey")
+  usuario      Usuario       @relation(fields: [idProfissional], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "profissionais_id_profissional_fkey")
+  profissao    Profissao     @relation(fields: [idProfissao], references: [idProfissao], onDelete: Restrict, onUpdate: Cascade, map: "profissionais_id_profissao_fkey")
   solicitacoes Solicitacao[]
 
   @@map("profissionais")
@@ -114,16 +114,16 @@ model Profissional {
 
 // Tabela filha: clientes (PK compartilhada com usuarios)
 model Cliente {
-  id_cliente           Int       @id
-  telefone             String    @db.VarChar(14)
-  email                String    @unique @db.VarChar(255)
-  senha                String    @db.VarChar(255)
-  foto_perfil          String?   @db.VarChar(255)
-  perfil_ativo         Boolean   @default(true)
-  data_ativacao_perfil DateTime  @default(now()) @db.Timestamptz(6)
-  data_desativacao     DateTime? @db.Timestamptz(6)
+  idCliente          Int       @id @map("id_cliente")
+  telefone           String    @db.VarChar(14)
+  email              String    @unique @db.VarChar(255)
+  senha              String    @db.VarChar(255)
+  fotoPerfil         String?   @map("foto_perfil") @db.VarChar(255)
+  perfilAtivo        Boolean   @default(true) @map("perfil_ativo")
+  dataAtivacaoPerfil DateTime  @default(now()) @map("data_ativacao_perfil") @db.Timestamptz(6)
+  dataDesativacao    DateTime? @map("data_desativacao") @db.Timestamptz(6)
 
-  usuario      Usuario       @relation(fields: [id_cliente], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "clientes_id_cliente_fkey")
+  usuario      Usuario       @relation(fields: [idCliente], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "clientes_id_cliente_fkey")
   solicitacoes Solicitacao[]
 
   @@map("clientes")
@@ -142,7 +142,7 @@ model OtpRecuperacaoSenha {
   usado        Boolean  @default(false)
   data_criacao DateTime @default(now()) @db.Timestamptz(6)
 
-  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "otp_recuperacao_senha_id_usuario_fkey")
+  usuario Usuario @relation(fields: [id_usuario], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "otp_recuperacao_senha_id_usuario_fkey")
 
   @@map("otp_recuperacao_senha")
 }
@@ -166,7 +166,7 @@ model Endereco {
   longitude       Decimal        @db.Decimal(9, 6)
   endereco_padrao Boolean        @default(false)
 
-  usuario      Usuario       @relation(fields: [id_usuario], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "enderecos_id_usuario_fkey")
+  usuario Usuario @relation(fields: [id_usuario], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "enderecos_id_usuario_fkey")
   solicitacoes Solicitacao[]
 
   @@map("enderecos")
@@ -204,11 +204,11 @@ model Solicitacao {
   dataCriacao      DateTime          @default(now()) @map("data_criacao") @db.Timestamptz(6)
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  cliente      Cliente      @relation(fields: [idCliente], references: [id_cliente], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_cliente_fkey")
-  profissional Profissional @relation(fields: [idProfissional], references: [id_profissional], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_profissional_fkey")
+  cliente      Cliente      @relation(fields: [idCliente], references: [idCliente], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_cliente_fkey")
+  profissional Profissional @relation(fields: [idProfissional], references: [idProfissional], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_profissional_fkey")
   servico      Servico      @relation(fields: [idServico], references: [idServico], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_servico_fkey")
   endereco     Endereco?    @relation(fields: [idEndereco], references: [id_endereco], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_endereco_fkey")
-  cancelador   Usuario?     @relation("SolicitacaoCanceladoPor", fields: [canceladoPor], references: [id_usuario], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_cancelado_por_fkey")
+  cancelador   Usuario?     @relation("SolicitacaoCanceladoPor", fields: [canceladoPor], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_cancelado_por_fkey")
   pagamento    Pagamento?
 
   @@index([idCliente, status], map: "solicitacoes_id_cliente_status_idx")
