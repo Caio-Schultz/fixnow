@@ -15,6 +15,7 @@ enum TipoUsuario {
   CLIENTE
   PROFISSIONAL
   AMBOS
+  INATIVO
 
   @@map("tipo_usuario_enum")
 }
