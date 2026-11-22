@@ -6,20 +6,6 @@ import dbValidators from '../../utils/dbValidators.js';
 import usuarioService from '../usuarios/usuarioService.js';
 
 async function criarCliente(dados) {
-    const emailNormalizado = dados.email.toLowerCase().trim(); // Normaliza os dados do e-mail.
-    const telefoneNormalizado = dados.telefone.replace(/\D/g, ''); // Remove tudo que não for dígito.
-
-    // Valida formatos dos dados.
-    if (!formatValidators.validarEmail(emailNormalizado)) {
-        throw httpError.httpError(400, 'E-mail inválido.');
-    }
-    if (!formatValidators.validarTelefone(telefoneNormalizado)) {
-        throw httpError.httpError(400, 'Telefone inválido.');
-    }
-    if (!formatValidators.validarSenha(dados.senha)) {
-        throw httpError.httpError(400, 'A senha deve entre 8 e 64 caracteres, com letra maiúscula, minúscula e número.');
-    }
-
     // Verifica se e-mail ou telefone já estão em uso em outra conta do tipo cliente.
     if (await dbValidators.verificarEmailExistente('CLIENTE', emailNormalizado)) {
         throw httpError.httpError(409, 'Este e-mail já está em uso.');
@@ -57,7 +43,7 @@ async function criarCliente(dados) {
                 throw httpError.httpError(409, 'Este usuário já possui um perfil de cliente ativo.');
             }
 
-            await usuarioService.atualizarTipoUsuario(usuario.idUsuario, tx);
+            await usuarioService.atualizarTipoUsuario(usuario.idUsuario, 'AMBOS', tx);
         }
 
         const clienteCriado = await tx.cliente.create({
@@ -162,10 +148,10 @@ async function atualizarSenha(idCliente, senhaAtual, novaSenha, confirmacaoNovaS
         throw httpError.httpError(400, 'A senha deve entre 8 e 64 caracteres, com letra maiúscula, minúscula e número.');
     }
 
-    const cliente = await prisma.cliente.findUnique({ 
-        where: { idCliente: idCliente } 
+    const cliente = await prisma.cliente.findUnique({
+        where: { idCliente: idCliente }
     });
-    
+
     if (!cliente) throw httpError.httpError(404, 'Cliente não encontrado.');
 
     // Validamos se a senha digitada no campo "senha atual" realmente bate com o hash salvo
@@ -183,12 +169,27 @@ async function atualizarSenha(idCliente, senhaAtual, novaSenha, confirmacaoNovaS
 }
 
 async function desativarPerfil(idCliente) {
-    await prisma.cliente.update({
-        where: { idCliente: idCliente },
-        data: {
-            perfilAtivo: false,
-            dataDesativacao: new Date()
+    await prisma.$transaction(async (tx) => {
+        const idUsuario = idCliente;
+        const usuario = await usuarioService.buscarPorId(idUsuario, tx);
+
+        if (!usuario) {
+            throw httpError.httpError(404, 'Usuário não encontrado.');
         }
+
+        if (usuario.tipoUsuario === 'CLIENTE') {
+            await usuarioService.atualizarTipoUsuario(idUsuario, 'INATIVO', tx);
+        } else if (usuario.tipoUsuario === 'AMBOS') {
+            await usuarioService.atualizarTipoUsuario(idUsuario, 'PROFISSIONAL', tx);
+        }
+
+        await tx.cliente.update({
+            where: { idCliente: idCliente },
+            data: {
+                perfilAtivo: false,
+                dataDesativacao: new Date()
+            }
+        });
     });
 }
 
