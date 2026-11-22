@@ -7,10 +7,10 @@ import usuarioService from '../usuarios/usuarioService.js';
 
 async function criarCliente(dados) {
     // Verifica se e-mail ou telefone já estão em uso em outra conta do tipo cliente.
-    if (await dbValidators.verificarEmailExistente('CLIENTE', emailNormalizado)) {
+    if (await dbValidators.verificarEmailExistente('CLIENTE', dados.email)) {
         throw httpError.httpError(409, 'Este e-mail já está em uso.');
     }
-    if (await dbValidators.verificarTelefoneExistente('CLIENTE', telefoneNormalizado)) {
+    if (await dbValidators.verificarTelefoneExistente('CLIENTE', dados.telefone)) {
         throw httpError.httpError(409, 'Este telefone já está em uso.');
     }
 
@@ -49,8 +49,8 @@ async function criarCliente(dados) {
         const clienteCriado = await tx.cliente.create({
             data: {
                 idCliente: usuario.idUsuario,
-                telefone: telefoneNormalizado,
-                email: emailNormalizado,
+                telefone: dados.telefone,
+                email: dados.email,
                 senha: senhaHash,
                 fotoPerfil: dados.fotoPerfilUrl || null,
                 perfilAtivo: true
@@ -85,32 +85,21 @@ async function buscarPorId(idCliente) {
 }
 
 async function atualizarCliente(idCliente, dados) {
-    const dadosAtualizar = {};
-
-    if (dados.telefone) {
-        const telLimpo = dados.telefone.replace(/\D/g, '');
-
-        if (!formatValidators.validarTelefone(telLimpo)) {
-            throw httpError.httpError(400, 'Telefone inválido.');
-        }
-        if (await dbValidators.verificarTelefoneExistente('CLIENTE', telLimpo, idCliente)) {
-            throw httpError.httpError(409, 'Este telefone já está em uso por outro cliente.');
-        }
-
-        dadosAtualizar.telefone = telLimpo;
+    if (dados.telefone && await dbValidator.verificarTelefoneExistente('CLIENTE', dados.telefone, idCliente)) {
+        throw httpError.httpError(409, 'Este telefone já está em uso por outro cliente.');
     }
-
     if (dados.fotoPerfilUrl !== undefined) {
-        dadosAtualizar.fotoPerfil = dados.fotoPerfilUrl;
+        dados.fotoPerfil = dados.fotoPerfilUrl;
+        delete dados.fotoPerfilUrl;
     }
 
-    if (Object.keys(dadosAtualizar).length === 0) {
+    if (Object.keys(dados).length === 0) {
         throw httpError.httpError(400, 'Nenhum dado válido fornecido para atualização.');
     }
 
     const clienteAtualizado = await prisma.cliente.update({
         where: { idCliente: idCliente },
-        data: dadosAtualizar
+        data: dados
     });
 
     return {
@@ -121,13 +110,7 @@ async function atualizarCliente(idCliente, dados) {
 }
 
 async function atualizarEmail(idCliente, novoEmail) {
-    const emailLimpo = novoEmail.toLowerCase().trim();
-
-    if (!formatValidators.validarEmail(emailLimpo)) {
-        throw httpError.httpError(400, 'E-mail inválido.');
-    }
-
-    if (await dbValidators.verificarEmailExistente('CLIENTE', emailLimpo, idCliente)) {
+    if (await dbValidator.verificarEmailExistente('CLIENTE', novoEmail, idCliente)) {
         throw httpError.httpError(409, 'Este e-mail já está em uso por outro cliente.');
     }
 
@@ -135,19 +118,11 @@ async function atualizarEmail(idCliente, novoEmail) {
     // Por enquanto, apenas consolidamos a atualização no banco.
     await prisma.cliente.update({
         where: { idCliente: idCliente },
-        data: { email: emailLimpo }
+        data: { email: novoEmail }
     });
 }
 
 async function atualizarSenha(idCliente, senhaAtual, novaSenha, confirmacaoNovaSenha) {
-    if (novaSenha !== confirmacaoNovaSenha) {
-        throw httpError.httpError(400, 'A nova senha e a confirmação não conferem.');
-    }
-
-    if (!formatValidators.validarSenha(novaSenha)) {
-        throw httpError.httpError(400, 'A senha deve entre 8 e 64 caracteres, com letra maiúscula, minúscula e número.');
-    }
-
     const cliente = await prisma.cliente.findUnique({
         where: { idCliente: idCliente }
     });
