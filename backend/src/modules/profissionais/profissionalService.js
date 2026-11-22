@@ -21,6 +21,7 @@ async function criarProfissional(dados) {
 
     // Execução da Transação
     const senhaHash = await bcrypt.hash(dados.senha, 14);
+    const documentoLimpo = dados.documento.replace(/\D/g, '');
 
     const novoProfissional = await prisma.$transaction(async (tx) => {
         let usuario = await usuarioService.buscarPorDocumento(dados.documento, tx);
@@ -203,12 +204,27 @@ async function atualizarSenha(idProfissional, senhaAtual, novaSenha) {
 }
 
 async function desativarPerfil(idProfissional) {
-    await prisma.profissional.update({
-        where: { idProfissional: idProfissional },
-        data: {
-            perfilAtivo: false,
-            dataDesativacao: new Date()
+    await prisma.$transaction(async (tx) => {
+        const idUsuario = idProfissional;
+        const usuario = await usuarioService.buscarPorId(idUsuario, tx);
+
+        if (!usuario) {
+            throw httpError.httpError(404, 'Usuário não encontrado.');
         }
+
+        if (usuario.tipoUsuario === 'PROFISSIONAL') {
+            await usuarioService.atualizarTipoUsuario(idUsuario, 'INATIVO', tx);
+        } else if (usuario.tipoUsuario === 'AMBOS') {
+            await usuarioService.atualizarTipoUsuario(idUsuario, 'CLIENTE', tx);
+        }
+
+        await tx.profissional.update({
+            where: { idProfissional: idProfissional },
+            data: {
+                perfilAtivo: false,
+                dataDesativacao: new Date()
+            }
+        });
     });
 }
 
