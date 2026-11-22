@@ -46,7 +46,7 @@ async function criarProfissional(dados) {
                 throw httpError.httpError(409, 'Este usuário já possui um perfil de profissional ativo.');
             }
 
-            await usuarioService.atualizarTipoUsuario(usuario.id_usuario, tx);
+            await usuarioService.atualizarTipoUsuario(usuario.idUsuario, 'AMBOS', tx);
         }
 
         const profissionalCriado = await tx.profissional.create({
