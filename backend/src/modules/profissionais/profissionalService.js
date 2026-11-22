@@ -3,6 +3,7 @@ import prisma from '../../db/prisma.js';
 import httpError from '../../utils/httpError.js';
 import dbValidator from '../../utils/dbValidators.js';
 import usuarioService from '../usuarios/usuarioService.js';
+import filterCreation from '../../utils/filterCreation.js';
 
 async function criarProfissional(dados) {
 
@@ -228,6 +229,37 @@ async function desativarPerfil(idProfissional) {
     });
 }
 
+async function listarAgendaProfissional(idProfissional, filtros) {
+
+    const agenda = await prisma.solicitacao.findMany({
+        where: {
+            idProfissional: idProfissional,
+            status: 'CONFIRMADO',
+            ...filterCreation.montarFiltroData(filtros)
+        },
+        select: {
+            idSolicitacao: true,
+            dataServico: true,
+            horaServico: true,
+            tipoSolicitacao: true,
+            orcamento: true,
+            servico: { select: { problema: true } },
+            endereco: {
+                select: { rua: true, numero: true, complemento: true, bairro: true, cidade: true }
+            },
+            cliente: {
+                select: {
+                    telefone: true,
+                    usuario: { select: { nome: true } }
+                }
+            }
+        },
+        orderBy: [{ dataServico: "asc" }, { horaServico: "asc" }]
+    });
+
+    return agenda;
+}
+
 export default {
     criarProfissional,
     buscarProfissionais,
@@ -235,5 +267,6 @@ export default {
     atualizarProfissional,
     atualizarEmail,
     atualizarSenha,
-    desativarPerfil
+    desativarPerfil,
+    listarAgendaProfissional
 };

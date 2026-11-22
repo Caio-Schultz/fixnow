@@ -198,6 +198,61 @@ router.use(authMiddleware.exigePerfil('PROFISSIONAL'));
 
 /**
  * @swagger
+ * /api/profissionais/agenda:
+ *   get:
+ *     tags: [Profissionais]
+ *     summary: Lista os serviços confirmados do profissional autenticado
+ *     parameters:
+ *       - in: query
+ *         name: data
+ *         schema:
+ *           type: string
+ *           format: date
+ *         example: '2026-12-01'
+ *         description: Filtra os serviços por dia. Se enviado, tem precedência sobre mes.
+ *       - in: query
+ *         name: mes
+ *         schema:
+ *           type: string
+ *           pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+ *         example: '2026-12'
+ *         description: Filtra os serviços do mês informado.
+ *     responses:
+ *       200:
+ *         description: Agenda do profissional
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RespostaAgendaProfissional'
+ *       400:
+ *         description: Filtro de data inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ *       401:
+ *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ *       403:
+ *         description: Acesso permitido apenas para perfil PROFISSIONAL
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ *       500:
+ *         description: Erro interno no servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ */
+router.get("/agenda", profissionalController.listarAgendaProfissional);
+
+/**
+ * @swagger
  * /api/profissionais/me:
  *   get:
  *     tags: [Profissionais]

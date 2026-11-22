@@ -242,6 +242,27 @@ async function desativarMeuPerfil(req, res) {
     }
 }
 
+async function listarAgendaProfissional(req, res) {
+    try {
+        const idProfissional = req.user.idUsuario;
+        const { data, mes } = req.query;
+
+        const agenda = await profissionalService.listarAgendaProfissional(idProfissional, { data, mes });
+
+        const lista = agenda.map((s) => ({
+            ...s,
+            orcamento: s.orcamento !== null ? Number(s.orcamento) : null
+        }));
+
+        return res.status(200).json({
+            sucesso: true,
+            agenda: lista
+        });
+    } catch (error) {
+        return httpError.responderErro(res, error);
+    }
+}
+
 export default {
     criarProfissional,
     buscarProfissionais,
@@ -249,5 +270,6 @@ export default {
     atualizarMeuPerfil,
     atualizarEmail,
     atualizarSenha,
-    desativarMeuPerfil
+    desativarMeuPerfil,
+    listarAgendaProfissional
 };

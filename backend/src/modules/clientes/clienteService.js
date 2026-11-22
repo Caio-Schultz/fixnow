@@ -4,6 +4,7 @@ import httpError from '../../utils/httpError.js';
 import formatValidators from '../../utils/formatValidators.js';
 import dbValidators from '../../utils/dbValidators.js';
 import usuarioService from '../usuarios/usuarioService.js';
+import filterCreation from '../../utils/filterCreation.js';
 
 async function criarCliente(dados) {
     // Verifica se e-mail ou telefone já estão em uso em outra conta do tipo cliente.
@@ -168,11 +169,40 @@ async function desativarPerfil(idCliente) {
     });
 }
 
+async function listarAgendaCliente(idCliente, filtros) {
+
+    const agenda = await prisma.solicitacao.findMany({
+        where: {
+            idCliente: idCliente,
+            status: 'CONFIRMADO',
+            ...filterCreation.montarFiltroData(filtros)
+        },
+        select: {
+            idSolicitacao: true,
+            dataServico: true,
+            horaServico: true,
+            tipoSolicitacao: true,
+            orcamento: true,
+            servico: { select: { problema: true } },
+            profissional: {
+                select: {
+                    fotoPerfil: true,
+                    usuario: { select: { nome: true } }
+                }
+            }
+        },
+        orderBy: [{ dataServico: "asc" }, { horaServico: "asc" }]
+    });
+
+    return agenda;
+}
+
 export default {
     criarCliente,
     buscarPorId,
     atualizarCliente,
     desativarCliente: desativarPerfil,
     atualizarEmail,
-    atualizarSenha
+    atualizarSenha,
+    listarAgendaCliente
 };

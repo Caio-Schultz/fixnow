@@ -82,6 +82,61 @@ router.use(authMiddleware.exigePerfil('CLIENTE'));
 
 /**
  * @swagger
+ * /api/clientes/agenda:
+ *   get:
+ *     tags: [Clientes]
+ *     summary: Lista os serviços confirmados do cliente autenticado
+ *     parameters:
+ *       - in: query
+ *         name: data
+ *         schema:
+ *           type: string
+ *           format: date
+ *         example: '2026-12-01'
+ *         description: Filtra os serviços por dia. Se enviado, tem precedência sobre mes.
+ *       - in: query
+ *         name: mes
+ *         schema:
+ *           type: string
+ *           pattern: '^\d{4}-(0[1-9]|1[0-2])$'
+ *         example: '2026-12'
+ *         description: Filtra os serviços do mês informado.
+ *     responses:
+ *       200:
+ *         description: Agenda do cliente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RespostaAgendaCliente'
+ *       400:
+ *         description: Filtro de data inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ *       401:
+ *         description: Token ausente ou inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ *       403:
+ *         description: Acesso permitido apenas para perfil CLIENTE
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ *       500:
+ *         description: Erro interno no servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ */
+router.get("/agenda", clienteController.listarAgendaCliente);
+
+/**
+ * @swagger
  * /api/clientes/me:
  *   get:
  *     tags: [Clientes]
