@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { swaggerUi, swaggerSpec } from './config/swagger.js';
 import solicitacaoRoutes from './modules/solicitacoes/solicitacaoRoutes.js';
 import authRoutes from './modules/auth/authRoutes.js';
 import usuarioRoutes from './modules/usuarios/usuarioRoutes.js';
@@ -16,6 +17,8 @@ const api = express.Router();
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 api.use("/solicitacoes", solicitacaoRoutes);
 api.use("/auth", authRoutes);
