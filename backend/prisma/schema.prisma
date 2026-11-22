@@ -135,15 +135,15 @@ model Cliente {
 // ==============================================================================
 
 model OtpRecuperacaoSenha {
-  id_otp       Int      @id @default(autoincrement())
-  id_usuario   Int
-  codigo       String   @db.VarChar(6)
-  expira_em    DateTime @db.Timestamptz(6)
-  tentativas   Int      @default(0) @db.SmallInt
-  usado        Boolean  @default(false)
-  data_criacao DateTime @default(now()) @db.Timestamptz(6)
+  idOtp       Int      @id @default(autoincrement()) @map("id_otp")
+  idUsuario   Int      @map("id_usuario")
+  codigo      String   @db.VarChar(6)
+  expiraEm    DateTime @map("expira_em") @db.Timestamptz(6)
+  tentativas  Int      @default(0) @db.SmallInt
+  usado       Boolean  @default(false)
+  dataCriacao DateTime @default(now()) @map("data_criacao") @db.Timestamptz(6)
 
-  usuario Usuario @relation(fields: [id_usuario], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "otp_recuperacao_senha_id_usuario_fkey")
+  usuario Usuario @relation(fields: [idUsuario], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "otp_recuperacao_senha_id_usuario_fkey")
 
   @@map("otp_recuperacao_senha")
 }
