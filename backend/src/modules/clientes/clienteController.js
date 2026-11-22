@@ -146,11 +146,33 @@ async function desativarPerfil(req, res) {
     }
 }
 
+async function listarAgendaCliente(req, res) {
+    try {
+        const idCliente = req.user.idUsuario;
+        const { data, mes } = req.query;
+
+        const agenda = await clienteService.listarAgendaCliente(idCliente, { data, mes });
+
+        const lista = agenda.map((s) => ({
+            ...s,
+            orcamento: s.orcamento !== null ? Number(s.orcamento) : null
+        }));
+
+        return res.status(200).json({
+            sucesso: true,
+            agenda: lista
+        });
+    } catch (error) {
+        return httpError.responderErro(res, error);
+    }
+}
+
 export default {
     criarCliente,
     buscarPorId,
     atualizarCliente,
     desativarPerfil,
     atualizarSenha,
-    atualizarEmail
+    atualizarEmail,
+    listarAgendaCliente
 };
