@@ -14,7 +14,21 @@ async function criarCliente(req, res) {
     ) {
         return res.status(400).json({ error: 'Os campos nome, documento, email, telefone, dataNasc e senha são obrigatórios e devem ser texto.' });
     }
-    
+
+    const emailNormalizado = dados.email.toLowerCase().trim(); // Normaliza os dados do e-mail.
+    const telefoneNormalizado = dados.telefone.replace(/\D/g, ''); // Remove tudo que não for dígito.
+
+    // Valida formatos dos dados.
+    if (!formatValidators.validarEmail(emailNormalizado)) {
+        throw httpError.httpError(400, 'E-mail inválido.');
+    }
+    if (!formatValidators.validarTelefone(telefoneNormalizado)) {
+        throw httpError.httpError(400, 'Telefone inválido.');
+    }
+    if (!formatValidators.validarSenha(dados.senha)) {
+        throw httpError.httpError(400, 'A senha deve entre 8 e 64 caracteres, com letra maiúscula, minúscula e número.');
+    }
+
     if (fotoPerfilUrl !== undefined && typeof fotoPerfilUrl !== 'string') {
         return res.status(400).json({ error: 'O campo fotoPerfilUrl deve ser texto.' });
     }
