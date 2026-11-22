@@ -153,21 +153,21 @@ model OtpRecuperacaoSenha {
 // ==============================================================================
 
 model Endereco {
-  id_endereco     Int            @id @default(autoincrement())
-  id_usuario      Int
-  perfil_endereco PerfilEndereco
-  cep             String         @db.VarChar(9)
-  estado          String         @db.VarChar(2)
-  cidade          String         @db.VarChar(50)
-  bairro          String         @db.VarChar(50)
-  rua             String         @db.VarChar(100)
-  numero          String         @db.VarChar(10)
-  complemento     String?        @db.VarChar(50)
-  latitude        Decimal        @db.Decimal(9, 6)
-  longitude       Decimal        @db.Decimal(9, 6)
-  endereco_padrao Boolean        @default(false)
+  idEndereco     Int            @id @default(autoincrement()) @map("id_endereco")
+  idUsuario      Int            @map("id_usuario")
+  perfilEndereco PerfilEndereco @map("perfil_endereco")
+  cep            String         @db.VarChar(9)
+  estado         String         @db.VarChar(2)
+  cidade         String         @db.VarChar(50)
+  bairro         String         @db.VarChar(50)
+  rua            String         @db.VarChar(100)
+  numero         String         @db.VarChar(10)
+  complemento    String?        @db.VarChar(50)
+  latitude       Decimal        @db.Decimal(9, 6)
+  longitude      Decimal        @db.Decimal(9, 6)
+  enderecoPadrao Boolean        @default(false) @map("endereco_padrao")
 
-  usuario Usuario @relation(fields: [id_usuario], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "enderecos_id_usuario_fkey")
+  usuario      Usuario       @relation(fields: [idUsuario], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "enderecos_id_usuario_fkey")
   solicitacoes Solicitacao[]
 
   @@map("enderecos")
@@ -208,7 +208,7 @@ model Solicitacao {
   cliente      Cliente      @relation(fields: [idCliente], references: [idCliente], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_cliente_fkey")
   profissional Profissional @relation(fields: [idProfissional], references: [idProfissional], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_profissional_fkey")
   servico      Servico      @relation(fields: [idServico], references: [idServico], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_servico_fkey")
-  endereco     Endereco?    @relation(fields: [idEndereco], references: [id_endereco], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_endereco_fkey")
+  endereco     Endereco?    @relation(fields: [idEndereco], references: [idEndereco], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_id_endereco_fkey")
   cancelador   Usuario?     @relation("SolicitacaoCanceladoPor", fields: [canceladoPor], references: [idUsuario], onDelete: Restrict, onUpdate: Cascade, map: "solicitacoes_cancelado_por_fkey")
   pagamento    Pagamento?
 
