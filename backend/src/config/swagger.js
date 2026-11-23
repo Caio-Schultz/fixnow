@@ -12,6 +12,7 @@ const routeFiles = [
     join(__dirname, '../modules/clientes/clienteRoutes.js'),
     join(__dirname, '../modules/enderecos/enderecoRoutes.js'),
     join(__dirname, '../modules/profissionais/profissionalRoutes.js'),
+    join(__dirname, '../modules/pagamentos/pagamentoRoutes.js'),
     join(__dirname, '../modules/solicitacoes/solicitacaoRoutes.js'),
     join(__dirname, '../modules/usuarios/usuarioRoutes.js'),
 ];
@@ -85,6 +86,26 @@ const options = {
                         formaPagamento: { type: 'string', example: 'DINHEIRO' },
                         status: { type: 'string', enum: ['PENDENTE', 'CONFIRMADO'], example: 'PENDENTE' },
                         dataPagamento: { type: 'string', format: 'date-time', example: '2026-12-02T15:00:00.000Z' },
+                    },
+                },
+                RespostaExtrato: {
+                    type: 'object',
+                    properties: {
+                        sucesso: { type: 'boolean', example: true },
+                        pagamentos: {
+                            type: 'array',
+                            items: { $ref: '#/components/schemas/Pagamento' },
+                        },
+                        paginacao: {
+                            type: 'object',
+                            properties: {
+                                page: { type: 'integer', example: 1 },
+                                limit: { type: 'integer', example: 10 },
+                                valorTotal: { type: 'number', example: 1250.5 },
+                                quantidadeDePagamentos: { type: 'integer', example: 12 },
+                                totalPaginas: { type: 'integer', example: 2 },
+                            },
+                        },
                     },
                 },
                 UsuarioResumo: {

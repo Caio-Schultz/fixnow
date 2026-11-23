@@ -111,7 +111,7 @@ async function listarHistorico(idUsuario, { page, limit, status }) {
             skip: (page - 1) * limit,
             take: limit
         }),
-        prisma.solicitacao.count({where: where })
+        prisma.solicitacao.count({ where: where })
     ]);
 
     return { solicitacoes, total };
@@ -291,6 +291,7 @@ async function concluirSolicitacao(idProfissional, idSolicitacao) {
             data: {
                 idSolicitacao: idSolicitacao,
                 valor: solicitacao.orcamento,
+                status: "CONFIRMADO",
                 formaPagamento: solicitacao.formaPagamento ?? "DINHEIRO"
             }
         });

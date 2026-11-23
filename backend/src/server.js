@@ -9,6 +9,7 @@ import usuarioRoutes from './modules/usuarios/usuarioRoutes.js';
 import clienteRoutes from './modules/clientes/clienteRoutes.js';
 import profissionalRoutes from './modules/profissionais/profissionalRoutes.js';
 import enderecoRoutes from './modules/enderecos/enderecoRoutes.js';
+import pagamentoRoutes from './modules/pagamentos/pagamentoRoutes.js'
 
 const app = express();
 const PORT = 3000;
@@ -26,6 +27,7 @@ api.use("/usuarios", usuarioRoutes);
 api.use("/clientes", clienteRoutes);
 api.use("/profissionais", profissionalRoutes);
 api.use("/enderecos", enderecoRoutes);
+api.use("/financeiro", pagamentoRoutes);
 // ...
 
 // todos os endpoints começam com /api
